@@ -1,4 +1,5 @@
 Adds merchants inventory query to Wurm RMI.
 
 ggGetTraderStore($intraserverpassword)
-Output is html table in following format: <tr><td>trader</td><td>coords</td><td><table>*list of items as*<tr><td>rarity name,material</td><td>enchants</td><td>quality</td><td>price</td></tr></table></td></tr>
+Output is html table in following format: 
+<tr><td>trader</td><td>coords</td><td><table>*list of items as*<tr><td>rarity name,material</td><td>enchants</td><td>quality</td><td>price</td></tr></table></td></tr>
