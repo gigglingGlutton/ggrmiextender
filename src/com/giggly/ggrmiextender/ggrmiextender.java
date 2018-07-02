@@ -1,16 +1,5 @@
 package com.giggly.ggrmiextender;
 
-import com.wurmonline.server.creatures.Creature;
-import com.wurmonline.server.creatures.Creatures;
-import com.wurmonline.server.creatures.NoSuchCreatureException;
-import com.wurmonline.server.items.Item;
-import com.wurmonline.server.items.ItemSpellEffects;
-import com.wurmonline.server.spells.SpellEffect;
-import static com.wurmonline.shared.util.MaterialUtilities.getRarityString;
-import static com.wurmonline.server.items.Materials.convertMaterialByteIntoString;
-
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -34,59 +23,30 @@ import javassist.CannotCompileException;
 public class ggrmiextender implements WurmServerMod, Configurable, Initable, PreInitable {
 	
 	public boolean merchantEnlist = false;
+	public String merchantFormat = null;
 	
 	@Override
 	public void configure(Properties prop) {
 		this.merchantEnlist = Boolean.valueOf(prop.getProperty("merchantEnlist", Boolean.toString(merchantEnlist)));
+		this.merchantFormat = prop.getProperty("merchantFormat", merchantFormat);
 	}
 	
 	// main function
 	@CallbackApi
 	public String getInvFormatted(String tradersList) {
 		if (tradersList != null && !tradersList.isEmpty() ) {
-			long traderID = 0;
-			String ret = "<table><tr><th></th><th></th><th></th></tr>";
-			int itemCount = 0;
-			String items = "";
-			String spells;
-			String price;
-			String[] splitTraders = tradersList.split(";");
-			for (String str : splitTraders) {
-				traderID = Long.parseLong(str, 10);
-				try {
-					Creature trader = Creatures.getInstance().getCreature(traderID);
-					itemCount = trader.getNumberOfShopItems();
-					if (itemCount>0) {
-						@SuppressWarnings("unchecked")
-						List<Item> inventory = new ArrayList(trader.getInventory().getItems());
-						items = "";
-						for (Item item : inventory) {
-							spells = "";
-							//copy from wurm code
-							ItemSpellEffects eff = item.getSpellEffects();
-							if (eff != null) {
-								SpellEffect[] speffs = eff.getEffects();
-								for (int x = 0; x < speffs.length; x++) {
-									if (speffs[x].type < -10L) {
-										spells = spells + speffs[x].getName() + ";";
-									} else {
-										spells = spells + speffs[x].getName() + "[" + (int)speffs[x].power + "];";
-									}
-								}
-							}
-							// Price if set or default value if not
-							price = (item.getPrice() == 0)? formatPrice(item.getValue()) : formatPrice(item.getPrice());
-							items = items + "<tr><td>" + getRarityString(item.getRarity()) + " " + item.getName() + "," + convertMaterialByteIntoString(item.getMaterial()) + "</td><td>" + spells + "</td><td>" + item.getQualityLevel() + "</td><td>" + price + "</td></tr>";
-						}
-						ret = ret + "<tr><td>" + trader.getName() + "</td><td>" + trader.getPosX() + ":" + trader.getPosY() +"</td><td><table>" + items + "</table></td></tr>";
-					}
-				} 
-				catch (NoSuchCreatureException e) {
-					Logger.getLogger(ggrmiextender.class.getName()).log(Level.WARNING, "No such creature exception at ggrmiextender ", "No such creature exception at ggrmiextender ");
-				}
-				
+			ggmerchantoutput fmt = new ggmerchantoutput();
+			String ret = "";
+			switch (merchantFormat) {
+				case "csv" : ret=fmt.csvOutput(tradersList);
+				break;
+				case "json" : ret=fmt.jsonOutput(tradersList);
+				break;
+				default : ret=fmt.htmlOutput(tradersList);
+				break;
 			}
-			return ret + "</table>";
+			return ret;
+			
 		}
 		return "Couldn't get traders inventory";
 	}
@@ -152,24 +112,7 @@ public class ggrmiextender implements WurmServerMod, Configurable, Initable, Pre
 		}
 	}
 	//Convert irons to gsci
-	 public String formatPrice(int price)
-  {
-    int a = price;
-	String b = "";
-	String c = "";
-	String[] i = {"i","c","s","g"};
-	int t;
-	int j = 0;
-		
-	while (a>0) {
-		t=a%100;
-		c=b;
-		if (t!=0){ b = t + i[j] + c;}
-		a=(a-t)/100;
-		j++;
-	}
-    return b;
-  }
+
 	 
 }
 
